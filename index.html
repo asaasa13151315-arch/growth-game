@@ -1,1 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>育成ゲーム</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #b8f2c8, #79c8ff);
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+      color: #17351f;
+    }
 
+    .game {
+      width: min(90vw, 420px);
+      padding: 24px;
+      text-align: center;
+      background: rgba(255,255,255,.9);
+      border-radius: 28px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.18);
+    }
+
+    .pet {
+      margin: 20px 0;
+      font-size: 110px;
+      transition: transform .2s;
+    }
+
+    .pet.happy {
+      transform: scale(1.15) rotate(8deg);
+    }
+
+    .status {
+      padding: 14px;
+      margin: 14px 0;
+      background: #e8fff0;
+      border-radius: 16px;
+      font-size: 18px;
+      line-height: 1.8;
+    }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      border: 0;
+      border-radius: 16px;
+      background: #28a745;
+      color: white;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    button:active {
+      transform: scale(.97);
+    }
+  </style>
+</head>
+<body>
+  <main class="game">
+    <h1>🐣 まめペット育成</h1>
+    <p>エサをあげて、ペットを育てよう！</p>
+
+    <div id="pet" class="pet">🐣</div>
+
+    <div class="status">
+      レベル：<span id="level">1</span><br>
+      経験値：<span id="exp">0</span> / <span id="nextExp">10</span><br>
+      コイン：<span id="coin">0</span>
+    </div>
+
+    <button id="feedButton">🍎 エサをあげる</button>
+  </main>
+
+  <script>
+    let level = 1;
+    let exp = 0;
+    let coin = 0;
+
+    const pet = document.getElementById("pet");
+    const levelText = document.getElementById("level");
+    const expText = document.getElementById("exp");
+    const nextExpText = document.getElementById("nextExp");
+    const coinText = document.getElementById("coin");
+    const feedButton = document.getElementById("feedButton");
+
+    function requiredExp() {
+      return level * 10;
+    }
+
+    function updateScreen() {
+      levelText.textContent = level;
+      expText.textContent = exp;
+      nextExpText.textContent = requiredExp();
+      coinText.textContent = coin;
+
+      if (level >= 10) {
+        pet.textContent = "🐉";
+      } else if (level >= 5) {
+        pet.textContent = "🦖";
+      } else if (level >= 3) {
+        pet.textContent = "🐥";
+      } else {
+        pet.textContent = "🐣";
+      }
+    }
+
+    feedButton.addEventListener("click", () => {
+      exp += 2;
+      coin += 1;
+
+      if (exp >= requiredExp()) {
+        exp = 0;
+        level += 1;
+        alert("レベルアップ！ レベル " + level + " になった！");
+      }
+
+      pet.classList.add("happy");
+      setTimeout(() => pet.classList.remove("happy"), 200);
+
+      updateScreen();
+    });
+
+    updateScreen();
+  </script>
+</body>
+</html>
