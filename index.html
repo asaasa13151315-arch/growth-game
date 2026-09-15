@@ -61,7 +61,7 @@
 </head>
 <body>
   <main class="game">
-    <h1>🐣 まめペット育成</h1>
+    <h1>🐣 ペット育成</h1>
     <p>エサをあげて、ペットを育てよう！</p>
 
     <div id="pet" class="pet">🐣</div>
@@ -77,54 +77,143 @@
 
   <script>
     let level = 1;
-    let exp = 0;
-    let coin = 0;
+  let exp = 0;
+  let coin = 0;
+  let bgmOn = false;
+  let audioContext = null;
+  let bgmTimer = null;
 
-    const pet = document.getElementById("pet");
-    const levelText = document.getElementById("level");
-    const expText = document.getElementById("exp");
-    const nextExpText = document.getElementById("nextExp");
-    const coinText = document.getElementById("coin");
-    const feedButton = document.getElementById("feedButton");
+  const pet = document.getElementById("pet");
+  const levelText = document.getElementById("level");
+  const expText = document.getElementById("exp");
+  const nextExpText = document.getElementById("nextExp");
+  const coinText = document.getElementById("coin");
+  const feedButton = document.getElementById("feedButton");
+  const bgmButton = document.getElementById("bgmButton");
 
-    function requiredExp() {
-      return level * 10;
+  function requiredExp() {
+    return level * 10;
+  }
+
+  function updateScreen() {
+    levelText.textContent = level;
+    expText.textContent = exp;
+    nextExpText.textContent = requiredExp();
+    coinText.textContent = coin;
+
+    if (level >= 10) {
+      pet.textContent = "🐉";
+    } else if (level >= 5) {
+      pet.textContent = "🦖";
+    } else if (level >= 3) {
+      pet.textContent = "🐥";
+    } else {
+      pet.textContent = "🐣";
+    }
+  }
+
+  function getAudioContext() {
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
 
-    function updateScreen() {
-      levelText.textContent = level;
-      expText.textContent = exp;
-      nextExpText.textContent = requiredExp();
-      coinText.textContent = coin;
-
-      if (level >= 10) {
-        pet.textContent = "🐉";
-      } else if (level >= 5) {
-        pet.textContent = "🦖";
-      } else if (level >= 3) {
-        pet.textContent = "🐥";
-      } else {
-        pet.textContent = "🐣";
-      }
+    if (audioContext.state === "suspended") {
+      audioContext.resume();
     }
 
-    feedButton.addEventListener("click", () => {
-      exp += 2;
-      coin += 1;
+    return audioContext;
+  }
 
-      if (exp >= requiredExp()) {
-        exp = 0;
-        level += 1;
-        alert("レベルアップ！ レベル " + level + " になった！");
-      }
+  function playTone(frequency, duration, type = "sine", volume = 0.08, delay = 0) {
+    const ctx = getAudioContext();
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
 
-      pet.classList.add("happy");
-      setTimeout(() => pet.classList.remove("happy"), 200);
+    oscillator.type = type;
+    oscillator.frequency.value = frequency;
 
-      updateScreen();
-    });
+    gain.gain.setValueAtTime(0.001, ctx.currentTime + delay);
+    gain.gain.exponentialRampToValueAtTime(volume, ctx.currentTime + delay + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + duration);
+
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+
+    oscillator.start(ctx.currentTime + delay);
+    oscillator.stop(ctx.currentTime + delay + duration + 0.02);
+  }
+
+  function playFeedSound() {
+    playTone(480, 0.08, "sine", 0.07);
+    playTone(620, 0.10, "sine", 0.06, 0.07);
+  }
+
+  function playLevelUpSound() {
+    playTone(523, 0.12, "triangle", 0.08);
+    playTone(659, 0.12, "triangle", 0.08, 0.12);
+    playTone(784, 0.25, "triangle", 0.09, 0.24);
+  }
+
+  function playBgmPhrase() {
+    if (!bgmOn) return;
+
+    playTone(262, 0.22, "sine", 0.025, 0.00);
+    playTone(330, 0.22, "sine", 0.025, 0.30);
+    playTone(392, 0.22, "sine", 0.025, 0.60);
+    playTone(330, 0.22, "sine", 0.025, 0.90);
+    playTone(294, 0.22, "sine", 0.025, 1.20);
+    playTone(349, 0.22, "sine", 0.025, 1.50);
+    playTone(392, 0.42, "sine", 0.025, 1.80);
+  }
+
+  function startBgm() {
+    bgmOn = true;
+    bgmButton.textContent = "🔊 BGM：ON";
+    playBgmPhrase();
+
+    bgmTimer = setInterval(() => {
+      playBgmPhrase();
+    }, 2500);
+  }
+
+  function stopBgm() {
+    bgmOn = false;
+    bgmButton.textContent = "🎵 BGM：OFF";
+
+    if (bgmTimer) {
+      clearInterval(bgmTimer);
+      bgmTimer = null;
+    }
+  }
+
+  feedButton.addEventListener("click", () => {
+    playFeedSound();
+
+    exp += 2;
+    coin += 1;
+
+    if (exp >= requiredExp()) {
+      exp = 0;
+      level += 1;
+      playLevelUpSound();
+      alert("レベルアップ！ レベル " + level + " になった！");
+    }
+
+    pet.classList.add("happy");
+    setTimeout(() => pet.classList.remove("happy"), 200);
 
     updateScreen();
+  });
+
+  bgmButton.addEventListener("click", () => {
+    if (bgmOn) {
+      stopBgm();
+    } else {
+      startBgm();
+    }
+  });
+
+  updateScreen();
   </script>
 </body>
 </html>
